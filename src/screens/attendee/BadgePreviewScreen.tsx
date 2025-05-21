@@ -279,14 +279,21 @@ const BadgePreviewScreen = ({ route }: BadgePreviewScreenProps) => {
       console.log('Badge regenerated successfully:', response);
       
       // Extract updated attendee details from the response
-      const updatedAttendeeDetails = response?.attendee_details;
+      const updatedAttendeeDetails = response?.attendee_details || response?.data?.attendee_details;
       
       // Hide loading indicator
       setIsLoading(false);
       
       if (updatedAttendeeDetails && Object.keys(updatedAttendeeDetails).length > 0) {
-        // Replace the current screen with updated attendee details
-        navigation.replace('BadgePreview', { attendeeDetails: updatedAttendeeDetails });
+        // Update the local state directly instead of navigation
+        const updatedDetails = {
+          ...attendeeDetails,
+          ...updatedAttendeeDetails,
+          badge_image_url: updatedAttendeeDetails.badge_image_url + '?t=' + Date.now()
+        };
+        
+        // Force a re-render with new details
+        navigation.replace('BadgePreview', { attendeeDetails: updatedDetails });
         
         Alert.alert('Success', 'Badge has been regenerated successfully');
       } else {

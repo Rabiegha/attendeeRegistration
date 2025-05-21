@@ -14,8 +14,8 @@ export const fetchEventList = async (userId: string, isEventFrom: string, option
     throw new Error('User ID is required');
   }
   
-  if (!['1', '2'].includes(isEventFrom)) {
-    throw new Error('Invalid isEventFrom value. Must be "1" (today) or "2" (future)');
+  if (!['0', '1', '2'].includes(isEventFrom)) {
+    throw new Error('Invalid isEventFrom value. Must be "0" (past), "1" (today), or "2" (future)');
   }
 
   try {
