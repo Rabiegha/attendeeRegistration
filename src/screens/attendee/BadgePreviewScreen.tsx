@@ -148,10 +148,18 @@ const BadgePreviewScreen = ({ route }: BadgePreviewScreenProps) => {
     }
   }, [isModalVisible, fetchPrinters]);
   
-  // Set loading state based on API calls
+  // Force image reload when URL changes
+  const [imageTimestamp, setImageTimestamp] = useState<string>('');
+
+  // Load badge preview when attendee details change
   useEffect(() => {
-    setIsLoading(false);
-  }, []);
+    if (attendeeDetails?.badge_image_url) {
+      setIsLoading(true);
+      setLoadError(false);
+      // Generate new timestamp only when URL changes
+      setImageTimestamp(Date.now().toString());
+    }
+  }, [attendeeDetails?.badge_image_url]);
 
   // Effect to handle print status changes
   useEffect(() => {
@@ -277,8 +285,8 @@ const BadgePreviewScreen = ({ route }: BadgePreviewScreenProps) => {
       setIsLoading(false);
       
       if (updatedAttendeeDetails && Object.keys(updatedAttendeeDetails).length > 0) {
-        // Refresh the current screen with updated attendee details
-        navigation.navigate('BadgePreview', { attendeeDetails: updatedAttendeeDetails });
+        // Replace the current screen with updated attendee details
+        navigation.replace('BadgePreview', { attendeeDetails: updatedAttendeeDetails });
         
         Alert.alert('Success', 'Badge has been regenerated successfully');
       } else {
@@ -423,12 +431,14 @@ const BadgePreviewScreen = ({ route }: BadgePreviewScreenProps) => {
                 {badgeImageUrl ? (
                   <PinchZoomView style={styles.zoomContainer}>
                     <Image 
-                      source={{ uri: badgeImageUrl }} 
+                      key={imageTimestamp} // Force reload when URL or timestamp changes
+                      source={{ uri: `${badgeImageUrl}?t=${imageTimestamp}` }} // Use stable timestamp
                       style={styles.badgeImage}
                       resizeMode="contain"
                       onLoadStart={() => setIsLoading(true)}
                       onLoadEnd={() => setIsLoading(false)}
-                      onError={() => {
+                      onError={(error) => {
+                        console.error('Badge image load error:', error);
                         setIsLoading(false);
                         setLoadError(true);
                       }}

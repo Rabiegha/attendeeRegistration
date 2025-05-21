@@ -12,9 +12,10 @@ import ModifyAttendeeScreen from '../screens/attendee/ModifyAttendeeScreen';
 import PrinterSettingsScreen from '../screens/settings/PrinterSettingsScreen';
 
 // Create a navigation context to handle screen navigation
-type NavigationContextType = {
+export type NavigationContextType = {
   navigate: (screenName: string, params?: any) => void;
   goBack: () => void;
+  replace: (screenName: string, params?: any) => void;
   resetToScreen: (screenName: string, params?: any) => void;
   currentScreen: string;
   params?: any;
@@ -23,6 +24,7 @@ type NavigationContextType = {
 const NavigationContext = createContext<NavigationContextType>({
   navigate: () => {},
   goBack: () => {},
+  replace: () => {},
   resetToScreen: () => {},
   currentScreen: '',
   params: undefined,
@@ -99,8 +101,26 @@ const SimpleNavigator = () => {
     }
   };
 
+  // Replace the current screen without adding to history
+  const replace = (screenName: string, screenParams?: any) => {
+    const newHistory = [...history];
+    newHistory[newHistory.length - 1] = screenName;
+    setHistory(newHistory);
+    setCurrentScreen(screenName);
+    setParams(screenParams);
+  };
+
   return (
-    <NavigationContext.Provider value={{ navigate, goBack, resetToScreen, currentScreen, params }}>
+    <NavigationContext.Provider
+      value={{
+        navigate,
+        goBack,
+        replace,
+        resetToScreen,
+        currentScreen,
+        params,
+      }}
+    >
       <View style={styles.container}>
         {renderScreen()}
       </View>
