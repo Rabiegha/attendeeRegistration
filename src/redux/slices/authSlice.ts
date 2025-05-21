@@ -28,9 +28,10 @@ const authSlice = createSlice({
     builder.addCase(loginThunk.fulfilled, (state, action: PayloadAction<UserInfo>) => {
       state.isLoading = false;
       state.userInfo = action.payload;
-      state.currentUserId = action.payload.current_user_login_details_id;
+      state.currentUserId = action.payload.current_user_login_details_id?.toString();
       state.userType = action.payload.user_type_name;
       state.error = null;
+      console.log('Login successful, userId:', state.currentUserId); // Debug log
     });
     builder.addCase(loginThunk.rejected, (state, action) => {
       state.isLoading = false;

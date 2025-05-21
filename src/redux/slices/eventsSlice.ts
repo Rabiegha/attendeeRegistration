@@ -1,4 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { fetchFutureEvents } from '../thunks/event/fetchFutureEventsThunk';
+import { fetchPastEvents } from '../thunks/event/fetchPastEventsThunk';
 import { Event, EventsState } from '../../types/event.types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -56,35 +58,36 @@ const eventsSlice = createSlice({
   },
   extraReducers: (builder) => {
     // Future events thunk actions
-    builder.addCase('fetchFutureEvents/pending', (state) => {
+    builder.addCase(fetchFutureEvents.pending, (state) => {
       state.futureEvents.isLoading = true;
       state.futureEvents.error = null;
     });
-    builder.addCase('fetchFutureEvents/fulfilled', (state, action) => {
-      const { events, timeStamp } = action.payload as { events: Event[], timeStamp: number };
+    builder.addCase(fetchFutureEvents.fulfilled, (state, action) => {
+      const { events, timeStamp } = action.payload;
+      console.log('Received events:', events); // Debug log
       state.futureEvents.isLoading = false;
       state.futureEvents.data = events;
       state.futureEvents.timestamp = timeStamp;
       state.futureEvents.error = null;
     });
-    builder.addCase('fetchFutureEvents/rejected', (state, action) => {
+    builder.addCase(fetchFutureEvents.rejected, (state, action) => {
       state.futureEvents.isLoading = false;
       state.futureEvents.error = (action.payload as string) || 'Failed to fetch future events';
     });
 
     // Past events thunk actions
-    builder.addCase('fetchPastEvents/pending', (state) => {
+    builder.addCase(fetchPastEvents.pending, (state) => {
       state.pastEvents.isLoading = true;
       state.pastEvents.error = null;
     });
-    builder.addCase('fetchPastEvents/fulfilled', (state, action) => {
-      const { events, timeStamp } = action.payload as { events: Event[], timeStamp: number };
+    builder.addCase(fetchPastEvents.fulfilled, (state, action) => {
+      const { events, timeStamp } = action.payload;
       state.pastEvents.isLoading = false;
       state.pastEvents.data = events;
       state.pastEvents.timestamp = timeStamp;
       state.pastEvents.error = null;
     });
-    builder.addCase('fetchPastEvents/rejected', (state, action) => {
+    builder.addCase(fetchPastEvents.rejected, (state, action) => {
       state.pastEvents.isLoading = false;
       state.pastEvents.error = (action.payload as string) || 'Failed to fetch past events';
     });

@@ -46,7 +46,7 @@ interface PrintJob {
  */
 export const useNodePrint = () => {
   // Get printer settings from Redux store
-  const { selectedOptions, highQuality } = useSelector((state: any) => state.printers);
+  const { selectedOptions, highQuality, selectedNodePrinter } = useSelector((state: any) => state.printers);
   const orientation = selectedOptions?.orientation || 'portrait';
   const dpi = highQuality ? 600 : 300;
   const selectedPaperFormat = selectedOptions?.paperFormat || 'A4';
@@ -59,41 +59,38 @@ export const useNodePrint = () => {
    * @returns Promise that resolves when the print job is sent
    */
   const sendPrintJob = async (fileBase64: string, printerId: string): Promise<void> => {
+    if (!printerId) {
+      logger.error('No printer selected');
+      dispatch(setPrintStatus('No printer selected'));
+      return;
+    }
+    
+    logger.log('Sending print job to printer:', printerId);
+    console.log('Selected paper format:', selectedPaperFormat);
+
     try {
-      if (!printerId) {
-        logger.error('No printer selected');
-        dispatch(setPrintStatus('No printer selected'));
-        return;
-      }
-      
-      logger.log('Sending print job to printer:', printerId);
-
-      console.log('Selected paper format:', selectedPaperFormat);
-
-      // Create print job options
-      const printOptions: PrintJobOptions = {
-        copies: selectedOptions?.copies || 1,
-        color: selectedOptions?.color !== false, // Default to color if not specified
-        dpi: dpi.toString(),
-        orientation: orientation,
-        pageRanges: '',
-        pages: 0,
-        sizing: 'fit',
-      };
-
       // Configure the print job
       const printJob: PrintJob = {
         printerId,
-        title: 'Badge Printing',
+        title: 'Print Job From Attendee Registration',
         contentType: 'pdf_base64',
         content: fileBase64,
         source: 'Attendee Registration App',
-        options: printOptions,
+        options: {
+          copies: selectedOptions?.copies || 1,
+          color: selectedOptions?.color !== false, // Default to color if not specified
+          dpi: dpi.toString(),
+          orientation: orientation,
+          pageRanges: '1',
+          pages: 1,
+          sizing: 'none',
+        },
       };
 
       // Send the print job to the PrintNode service
-      await sendPrintService(printJob);
-      dispatch(setPrintStatus('Print job sent successfully'));
+      const result = await sendPrintService(printJob);
+      console.log("Print job result:", result);
+      dispatch(setPrintStatus('Print successful'));
     } catch (error: unknown) {
       logger.error('Error sending print job:', error);
       dispatch(setPrintStatus('Print failed'));

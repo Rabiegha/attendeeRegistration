@@ -86,7 +86,7 @@ const usePrintDocument = (): PrintDocumentHook => {
     try {
       if (!effectivePrinterId) {
         setStatus('no_printer');
-        throw new Error('Aucune imprimante sélectionnée.');
+        throw new Error('No printer selected.');
       }
       
       // Fetch and convert document to base64
@@ -106,13 +106,13 @@ const usePrintDocument = (): PrintDocumentHook => {
       logger.log('[printDocument] documentUrl:', documentUrl, 'sent to', selectedPrinter?.name || 'unknown printer');
       setSuccess(true);
       setStatus('success');
-      setMessage('Document imprimé avec succès.');
+      setMessage('Document printed successfully.');
     } catch (err: unknown) {
       // Handle error
       await delay(1000);
       const msg = err instanceof Error ? 
         err.message : 
-        'Erreur inconnue lors de l\'impression.';
+        'Unknown error during printing.';
         
       logger.error('[printDocument] error:', msg);
       setError(msg);
@@ -124,8 +124,9 @@ const usePrintDocument = (): PrintDocumentHook => {
       }, 100);
     } finally {
       setLoading(false);
+      setTimeout(() => clearStatus(), 3000); // Allow some time for user feedback
     }
-  }, [sendPrintJob, setStatus]);
+  }, [sendPrintJob, setStatus, clearStatus]);
 
   return {
     printDocument,

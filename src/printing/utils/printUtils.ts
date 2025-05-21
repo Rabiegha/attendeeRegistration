@@ -46,24 +46,31 @@ export const fetchDocumentAsBase64 = async (
   }
 
   try {
+    console.log('Fetching document from URL:', url);
     const response = await fetch(url);
+    
     if (!response.ok) {
-      throw new Error(`Échec de récupération du document: ${response.statusText}`);
+      throw new Error(`Failed to retrieve document: ${response.statusText} (${response.status})`);
     }
+    
     const buffer = await response.arrayBuffer();
+    console.log('Document fetched successfully, converting to base64');
     return arrayBufferToBase64(buffer);
   } catch (fetchErr: unknown) {
+    console.error('Error fetching document:', fetchErr);
+    
     if (onError) {
       onError('fetch_failed', 
         fetchErr instanceof Error ? 
           fetchErr.message : 
-          'Erreur réseau lors de la récupération du PDF.'
+          'Network error while retrieving the PDF.'
       );
     }
+    
     throw new Error(
       fetchErr instanceof Error ? 
         fetchErr.message : 
-        'Erreur réseau lors de la récupération du PDF.'
+        'Network error while retrieving the PDF.'
     );
   }
 };

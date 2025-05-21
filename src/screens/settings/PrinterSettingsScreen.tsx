@@ -59,20 +59,35 @@ const PrinterSettingsScreen = () => {
   };
   
   // Handle test print
-  const handleTestPrint = () => {
+  const handleTestPrint = async () => {
     if (!selectedNodePrinter) {
       Alert.alert('No Printer Selected', 'Please select a printer first.');
       return;
     }
     
-    // Simple test print implementation
-    dispatch(setPrintStatus('Sending test print...'));
-    
-    // Simulate print job
-    setTimeout(() => {
+    try {
+      // Update status
+      dispatch(setPrintStatus('Sending test print...'));
+      
+      // Create a simple test print PDF content (a white page with text)
+      const testPrintBase64 = 'JVBERi0xLjcKJeLjz9MKNSAwIG9iago8PAovRmlsdGVyIC9GbGF0ZURlY29kZQovTGVuZ3RoIDM4Cj4+CnN0cmVhbQp4nCvkMlAwUDC1NNUzMVGwMDHUszRSKErlCtfiyuMK5AIAXQ8GFgplbmRzdHJlYW0KZW5kb2JqCjMgMCBvYmoKPDwKL1BhZ2VzIDEgMCBSCi9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iagoxIDAgb2JqCjw8Ci9Db3VudCAxCi9LaWRzIFsyIDAgUl0KL1R5cGUgL1BhZ2VzCj4+CmVuZG9iagoyIDAgb2JqCjw8Ci9Db250ZW50cyA1IDAgUgovTWVkaWFCb3ggWzAgMCA2MTIgNzkyXQovUGFyZW50IDEgMCBSCi9SZXNvdXJjZXMgPDwKL0ZvbnQgPDwKL0YxIDQgMCBSCj4+Cj4+Ci9UeXBlIC9QYWdlCj4+CmVuZG9iago0IDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhCi9FbmNvZGluZyAvV2luQW5zaUVuY29kaW5nCi9TdWJ0eXBlIC9UeXBlMQovVHlwZSAvRm9udAo+PgplbmRvYmoKNiAwIG9iago8PAovQXV0aG9yIChBdHRlbmRlZSBSZWdpc3RyYXRpb24gQXBwKQovQ3JlYXRpb25EYXRlIChEOjIwMjUwNTIxMTIzMDAwKQovS2V5d29yZHMgKHRlc3QgcHJpbnQpCi9Nb2REYXRlIChEOjIwMjUwNTIxMTIzMDAwKQovUHJvZHVjZXIgKEF0dGVuZGVlIFJlZ2lzdHJhdGlvbiBBcHApCi9TdWJqZWN0ICh0ZXN0IHByaW50KQovVGl0bGUgKFRlc3QgUHJpbnQpCj4+CmVuZG9iagp4cmVmCjAgNwowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAxMzIgMDAwMDAgbiAKMDAwMDAwMDE4OSAwMDAwMCBuIAowMDAwMDAwMDgzIDAwMDAwIG4gCjAwMDAwMDAzMDcgMDAwMDAgbiAKMDAwMDAwMDAwMCAwMDAwMCBuIAowMDAwMDAwNDA1IDAwMDAwIG4gCnRyYWlsZXIKPDwKL0lEIFs8MWVlZmEyZDBlNGY1YjRhZjI2YmY1MTUzMzI2NzlkMzQ+IDwxZWVmYTJkMGU0ZjViNGFmMjZiZjUxNTMzMjY3OWQzND5dCi9JbmZvIDYgMCBSCi9Sb290IDMgMCBSCi9TaXplIDcKPj4Kc3RhcnR4cmVmCjYwNQolJUVPRgo=';
+      
+      // Import the sendPrintJob function
+      const { sendPrintJob } = await import('../../printing/hooks/useNodePrint').then(module => {
+        return { sendPrintJob: module.useNodePrint().sendPrintJob };
+      });
+      
+      // Send the test print job
+      await sendPrintJob(testPrintBase64, selectedNodePrinter.id);
+      
+      // Show success message
       dispatch(setPrintStatus('Test print sent successfully!'));
       Alert.alert('Success', `Test print sent to ${selectedNodePrinter.name}`);
-    }, 2000);
+    } catch (error) {
+      console.error('Test print error:', error);
+      dispatch(setPrintStatus('Test print failed'));
+      Alert.alert('Error', 'Failed to send test print. Please try again.');
+    }
   };
   
   return (

@@ -6,7 +6,8 @@ import globalStyle from '../../assets/styles/globalStyle';
 import {useEvent} from '../../context/EventContext';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {useNavigation} from '../../navigation/SimpleNavigator';
-import {useSelector, useDispatch} from 'react-redux';
+import {useSelector} from 'react-redux';
+import {useAppDispatch} from '../../redux/store';
 // We'll use the regular useDispatch instead of useAppDispatch
 import {selectCurrentUserId, selectIsLoading} from '../../redux/selectors/auth/authSelectors';
 import {logoutThunk} from '../../redux/thunks/auth/logoutThunk';
@@ -32,7 +33,7 @@ const EventsScreen = () => {
   const isLoading = useSelector(selectIsLoading);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigation = useNavigation();
 
   const handleEventSelect = (event: Event) => {
@@ -63,39 +64,36 @@ const EventsScreen = () => {
     navigation.navigate('PrinterSettings');
   };
 
-  const handleLogOut = async () => {
-    try {
-      // Show a confirmation dialog
-      Alert.alert(
-        'Logout',
-        'Are you sure you want to log out?',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
+  const handleLogOut = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to log out?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          onPress: async () => {
+            try {
+              console.log('Logging out user:', userId);
+              // Dispatch the logout thunk
+              const result = await dispatch(logoutThunk()).unwrap();
+              console.log('Logout successful');
+              // Clear any session details
+              clearSessionDetails();
+            } catch (err) {
+              // Handle logout error
+              const errorMessage = err instanceof Error ? err.message : 'There was a problem logging out';
+              console.error('Logout error:', errorMessage);
+              Alert.alert('Logout Failed', errorMessage);
+            }
           },
-          {
-            text: 'Logout',
-            onPress: () => {
-              try {
-                console.log('Logging out user:', userId);
-                // Dispatch the logout action
-                dispatch({ type: 'auth/logout' });
-                // Logout will trigger state change in SimpleNavigator
-              } catch (err) {
-                // Handle logout error
-                const errorMessage = err instanceof Error ? err.message : 'There was a problem logging out';
-                Alert.alert('Logout Failed', errorMessage);
-              }
-            },
-          },
-        ],
-        {cancelable: true},
-      );
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      console.error('Logout error:', errorMessage);
-    }
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
   const [opacity, setOpacity] = useState(0);

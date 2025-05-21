@@ -21,7 +21,7 @@ import PinchZoomView from 'react-native-pinch-zoom-view';
 import { useSelector, useDispatch } from 'react-redux';
 import Spinner from 'react-native-loading-spinner-overlay';
 import { AppDispatch } from '../../redux/store';
-import { useNodePrint } from '../../printing/hooks/useNodePrint';
+import usePrintDocument from '../../printing/hooks/usePrintDocument';
 import { getNodePrinters } from '../../services/printNodeService';
 import { selectNodePrinterAsync, Printer } from '../../redux/slices/printerSlice';
 import Search from '../../components/elements/Search';
@@ -74,7 +74,7 @@ const BadgePreviewScreen = ({ route }: BadgePreviewScreenProps) => {
   const dispatch = useDispatch<AppDispatch>();
   
   // Initialize the print hook
-  const { sendPrintJob } = useNodePrint();
+  const { printDocument, loading: printLoading, error: printError, success: printSuccess } = usePrintDocument();
   
   // Handle closing the printer selection modal
   const handleCloseModal = useCallback(() => {
@@ -148,6 +148,22 @@ const BadgePreviewScreen = ({ route }: BadgePreviewScreenProps) => {
     }
   }, [isModalVisible, fetchPrinters]);
   
+  // Set loading state based on API calls
+  useEffect(() => {
+    setIsLoading(false);
+  }, []);
+
+  // Effect to handle print status changes
+  useEffect(() => {
+    // Update isPrinting based on printLoading state
+    setIsPrinting(printLoading);
+    
+    // Show error alert if print fails
+    if (printError) {
+      Alert.alert('Print Error', printError);
+    }
+  }, [printLoading, printError, printSuccess]);
+
   // Get all available URLs
   const badgePdfUrl = attendeeDetails.badge_pdf_url;
   const badgeImageUrl = attendeeDetails.badge_image_url;
@@ -178,56 +194,40 @@ const BadgePreviewScreen = ({ route }: BadgePreviewScreenProps) => {
     try {
       setIsPrinting(true);
       
-      // Fetch the PDF content
-      const response = await fetch(badgePdfUrl);
-      const blob = await response.blob();
+      // Use the printDocument hook to handle the printing
+      // This will handle fetching the document, converting to base64, and sending to the printer
+      await printDocument(badgePdfUrl, selectedNodePrinter.id);
       
-      // Convert blob to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64data = reader.result as string;
-        // Remove the data URL prefix (e.g., 'data:application/pdf;base64,')
-        const base64Content = base64data.split(',')[1];
-        
-        // Send print job to the selected printer
-        await sendPrintJob(base64Content, selectedNodePrinter.id);
-        
-        setIsPrinting(false);
-        // Show alert with confirmation button
-        Alert.alert(
-          'Print Job Sent', 
-          `The badge has been sent to the printer (to ${selectedNodePrinter.name}).`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Clear the auto-close timer when user presses OK
-                if (autoCloseTimerRef.current) {
-                  clearTimeout(autoCloseTimerRef.current);
-                }
-                navigation.navigate('CreateAttendee');
+      setIsPrinting(false);
+      
+      // Create a reference to store the timer ID
+      const autoCloseTimerRef = { current: null as NodeJS.Timeout | null };
+      
+      // Show alert with confirmation button
+      Alert.alert(
+        'Print Job Sent', 
+        `The badge has been sent to the printer (${selectedNodePrinter.name}).`,
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // Clear the auto-close timer when user presses OK
+              if (autoCloseTimerRef.current) {
+                clearTimeout(autoCloseTimerRef.current);
               }
+              navigation.navigate('CreateAttendee');
             }
-          ],
-          { cancelable: false } // Prevent dismissing by tapping outside
-        );
-        
-        // Create a reference to store the timer ID
-        const autoCloseTimerRef = { current: null as NodeJS.Timeout | null };
-        
-        // Set a timeout to automatically navigate after 10 seconds
-        autoCloseTimerRef.current = setTimeout(() => {
-          // Navigate to CreateAttendee screen after timeout
-          console.log('Auto-closing print confirmation after 10 seconds');
-          navigation.navigate('CreateAttendee');
-        }, 10000); // 10 seconds
-      };
+          }
+        ],
+        { cancelable: false } // Prevent dismissing by tapping outside
+      );
       
-      reader.onerror = () => {
-        setIsPrinting(false);
-        Alert.alert('Error', 'Failed to read the PDF file');
-      };
+      // Set a timeout to automatically navigate after 10 seconds
+      autoCloseTimerRef.current = setTimeout(() => {
+        // Navigate to CreateAttendee screen after timeout
+        console.log('Auto-closing print confirmation after 10 seconds');
+        navigation.navigate('CreateAttendee');
+      }, 10000); // 10 seconds
     } catch (error) {
       setIsPrinting(false);
       console.error('Print error:', error);
