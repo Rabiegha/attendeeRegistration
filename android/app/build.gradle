@@ -92,9 +92,9 @@ android {
         // Configuration pour la keystore de production
         release {
             storeFile file('keystores/release.keystore')
-            storePassword 'attendee123456'
-            keyAlias 'attendee-key'
-            keyPassword 'attendee123456'
+            storePassword 'attendee'
+            keyAlias 'attendee-alias'
+            keyPassword 'attendee'
         }
     }
     buildTypes {
